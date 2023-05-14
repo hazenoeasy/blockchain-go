@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/gob"
 	"strconv"
 	"time"
 )
@@ -13,6 +14,7 @@ type Block struct {
 	Data          []byte // stored Data
 	PrevBlockHash []byte // previous block's hash
 	Hash          []byte // hash of the above information
+	Nonce         int
 }
 
 // calculate the hash value of the current block
@@ -23,11 +25,30 @@ func (b *Block) SetHash() { // instance method
 
 	b.Hash = hash[:] // create a slice from an array
 }
+func (b *Block) Serialize() []byte {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+
+	encoder.Encode(b) // need to handle the error
+
+	return result.Bytes()
+}
+func DeserializeBlock(d []byte) *Block {
+	var block Block
+
+	decoder := gob.NewDecoder(bytes.NewReader(d))
+	decoder.Decode(&block) // need to handle the error
+
+	return &block
+}
 
 // create a block
 func NewBlock(data string, prevBlockHash []byte) *Block {
-	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}}
-	block.SetHash()
+	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}, 0}
+	pof := NewProofOfWork(block)
+	nonce, hash := pof.Run()
+	block.Hash = hash
+	block.Nonce = nonce
 	return block
 }
 

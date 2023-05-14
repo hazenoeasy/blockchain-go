@@ -4,27 +4,18 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
-	"strconv"
 	"time"
 )
 
 // define the Block structure
 type Block struct {
-	Timestamp     int64  // timestamp of the create time
-	Data          []byte // stored Data
+	Timestamp     int64 // timestamp of the create time
+	Transactions  []*Transaction
 	PrevBlockHash []byte // previous block's hash
 	Hash          []byte // hash of the above information
 	Nonce         int
 }
 
-// calculate the hash value of the current block
-func (b *Block) SetHash() { // instance method
-	timestamp := []byte(strconv.FormatInt(b.Timestamp, 10))                       // transfer int64 into slice
-	headers := bytes.Join([][]byte{b.PrevBlockHash, b.Data, timestamp}, []byte{}) //  []byte{} is an empty slice, it will be the separator for the concat header
-	hash := sha256.Sum256(headers)                                                // fixed-length array of 32 bytes.
-
-	b.Hash = hash[:] // create a slice from an array
-}
 func (b *Block) Serialize() []byte {
 	var result bytes.Buffer
 	encoder := gob.NewEncoder(&result)
@@ -43,8 +34,8 @@ func DeserializeBlock(d []byte) *Block {
 }
 
 // create a block
-func NewBlock(data string, prevBlockHash []byte) *Block {
-	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}, 0}
+func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
+	block := &Block{time.Now().Unix(), transactions, prevBlockHash, []byte{}, 0}
 	pof := NewProofOfWork(block)
 	nonce, hash := pof.Run()
 	block.Hash = hash
@@ -52,6 +43,18 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 	return block
 }
 
-func NewGenesisBlock() *Block {
-	return NewBlock("Genesis Block", []byte{})
+func (b *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
+}
+
+func NewGenesisBlock(coinbase *Transaction) *Block {
+	return NewBlock([]*Transaction{coinbase}, []byte{})
 }

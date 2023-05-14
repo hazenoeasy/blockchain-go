@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/boltdb/bolt"
 )
@@ -19,6 +21,7 @@ type BlockchainIterator struct {
 }
 
 func (bc *BlockChain) Iterator() *BlockchainIterator {
+	// fmt.Println(bc)
 	bci := &BlockchainIterator{bc.tip, bc.db}
 
 	return bci
@@ -38,7 +41,7 @@ func (i *BlockchainIterator) Iter() *Block { // get the current block, then move
 	i.currentHash = block.PrevBlockHash
 	return block
 }
-func (bc *BlockChain) AddBlock(data string) {
+func (bc *BlockChain) AddBlock(transaction []*Transaction) {
 	var lastHash []byte
 	err := bc.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -49,7 +52,7 @@ func (bc *BlockChain) AddBlock(data string) {
 		log.Panic(err)
 	}
 
-	newBlock := NewBlock(data, lastHash) // create new block
+	newBlock := NewBlock(transaction, lastHash) // create new block
 	// add the new block to the database
 	err = bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -62,7 +65,12 @@ func (bc *BlockChain) AddBlock(data string) {
 		return nil
 	})
 }
-func NewBlockChain() *BlockChain {
+func NewBlockChain(address string) *BlockChain {
+	if dbExists() == false {
+		fmt.Println("No existing blockchain found. Create one first.")
+		os.Exit(1)
+	}
+
 	var tip []byte                          // last one
 	db, err := bolt.Open(dbFile, 0600, nil) // need to handle the error
 	if err != nil {
@@ -72,7 +80,8 @@ func NewBlockChain() *BlockChain {
 		b := tx.Bucket([]byte(blocksBucket))
 
 		if b == nil {
-			genesis := NewGenesisBlock()
+			cbtx := NewCoinbaseTX(address, "genesisCoinbaseData")
+			genesis := NewGenesisBlock(cbtx)
 			b, err := tx.CreateBucket([]byte(blocksBucket))
 			if err != nil {
 				return err
@@ -95,4 +104,12 @@ func NewBlockChain() *BlockChain {
 		log.Panic(err)
 	}
 	return &BlockChain{tip, db}
+}
+
+func dbExists() bool {
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
 }

@@ -4,13 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"math"
 	"math/big"
 )
-
-// difficulty
-const targetBits = 24
-const maxNonce = math.MaxInt32
 
 type ProofOfWork struct {
 	block  *Block
@@ -43,14 +38,14 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	var hash [32]byte // 32 bytes hash value
 	nonce := 0
 
-	fmt.Printf("Mining the block at \"%s\"\n", pow.block.Timestamp)
+	fmt.Printf("Mining the block after  %x \n", pow.block.PrevBlockHash)
 	for nonce < maxNonce {
 		data := pow.generateBytes(nonce)
 		hash = sha256.Sum256(data)
 		hashInt.SetBytes(hash[:])
 
 		if hashInt.Cmp(pow.target) == -1 {
-			fmt.Printf("\r%x", hash)
+			fmt.Printf("Find the hash  %x with nonce  %d ", hash, nonce)
 			break
 		} else {
 			nonce++

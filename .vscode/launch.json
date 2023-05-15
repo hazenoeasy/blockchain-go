@@ -12,14 +12,21 @@
             "program": "${workspaceFolder}",
             "env": {},
             "args": [
-                "send",
-                "-from",
-                "Hello",
-                "-to",
-                "Yuhao",
-                "-amount",
-                "5",
                 // "printchain"
+                // "getbalance",
+                // "-address",
+                // "19ZUdtHnZaKL5hP6KJtK86km1qyy4G3QX4",
+                // "createblockchain",
+                // "-address",
+                // "19ZUdtHnZaKL5hP6KJtK86km1qyy4G3QX4"
+                // "send",
+                // "-from",
+                // "19ZUdtHnZaKL5hP6KJtK86km1qyy4G3QX4",
+                // "-to",
+                // "16SnjkghXJmHRgeEz5iKdayn54SzaUMc4o",
+                // "-amount",
+                // "5"
+                "createwallet"
             ]
         }
     ]

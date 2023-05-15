@@ -41,7 +41,7 @@ func (i *BlockchainIterator) Iter() *Block { // get the current block, then move
 	i.currentHash = block.PrevBlockHash
 	return block
 }
-func (bc *BlockChain) AddBlock(transaction []*Transaction) {
+func (bc *BlockChain) MineBlock(transaction []*Transaction) {
 	var lastHash []byte
 	err := bc.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -64,7 +64,9 @@ func (bc *BlockChain) AddBlock(transaction []*Transaction) {
 		bc.tip = newBlock.Hash
 		return nil
 	})
+	fmt.Printf("Mine the block  %x\n", newBlock.Hash)
 }
+
 func NewBlockChain(address string) *BlockChain {
 	if dbExists() == false {
 		fmt.Println("No existing blockchain found. Create one first.")

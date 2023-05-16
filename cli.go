@@ -30,6 +30,8 @@ func (cli *CLI) createblockchain(address string) {
 	}
 	bc := CreateBlockChain(address)
 	defer bc.db.Close()
+	UTXOSet := UTXOSet{bc}
+	UTXOSet.Reindex()
 	fmt.Println("Done!")
 }
 
@@ -57,13 +59,14 @@ func (cli *CLI) getBalance(address string) {
 	bc := GetBlockchain()
 	defer bc.db.Close()
 
+	utxo := UTXOSet{bc}
 	if !ValidateAddress(address) {
 		fmt.Println("not a valid address")
 		os.Exit(1)
 	}
 	balance := 0
 	pubKeyHash := GetPubKeyHashfromAddress(address) // get public key hash
-	UTXOs := bc.FindUTXO(pubKeyHash)
+	UTXOs := utxo.FindUTXO(pubKeyHash)
 
 	for _, out := range UTXOs {
 		balance += out.Value
@@ -76,9 +79,14 @@ func (cli *CLI) send(from, to string, amount int) {
 	cli.bc = GetBlockchain()
 	defer cli.bc.db.Close()
 	var txs []*Transaction
-	tx := NewUTXOTransaction(from, to, amount, cli.bc)
+	utxo := UTXOSet{cli.bc}
+	tx := NewUTXOTransaction(from, to, amount, &utxo)
+	// cbTx := NewCoinbaseTX(from)
+	// txs = append(txs, cbTx)
 	txs = append(txs, tx)
-	cli.bc.MineBlock(txs) // transactions 都在 block里
+	newBlock := cli.bc.MineBlock(txs) // transactions 都在 block里
+
+	utxo.Update(newBlock)
 	fmt.Println("have send the money!")
 }
 

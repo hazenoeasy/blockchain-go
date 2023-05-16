@@ -1,11 +1,42 @@
 package main
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/gob"
+	"log"
+)
 
 type TXOutput struct { // 遍历output 才能知道balance  pubKeyHash表明了钱流向了谁，这个也可以伪造吗， 那肯定不行，要不然我都写我自己了。
 	Value int
 	// ScriptPubKey string
 	PubKeyHash []byte // claim that this output belongs to someone
+}
+type TXOutputs struct {
+	Outputs []TXOutput
+	OutIdxs []int // record the index in the transaction
+}
+
+func (outs *TXOutputs) Serialize() []byte {
+	var encoded bytes.Buffer
+
+	enc := gob.NewEncoder(&encoded)
+	err := enc.Encode(outs)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return encoded.Bytes()
+}
+func DeserializeTXOutputs(d []byte) *TXOutputs {
+	var outs TXOutputs
+
+	decoder := gob.NewDecoder(bytes.NewReader(d))
+	err := decoder.Decode(&outs) // need to handle the error
+	if err != nil {
+		log.Panic("decode issue!")
+	}
+
+	return &outs
 }
 
 // Lock signs the output   // 通过目标的Address来获得pubKeyHash 并加到output上面

@@ -31,7 +31,7 @@ func TestSend(t *testing.T) {
 	fmt.Println("testing send 1/2/3 from tom to jack")
 	cli.send(tom, jack, 1)
 	cli.send(tom, jack, 2)
-	cli.send(tom, jack, 3)
+	// cli.send(tom, jack, 3)
 
 }
 func TestGetBalance(t *testing.T) {

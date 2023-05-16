@@ -3,6 +3,7 @@ package main
 import "math"
 
 const dbFile = "blockchain.db"
+const utxoBucket = "utxo"
 const blocksBucket = "blocks"
 const usage = `Usage:
 	createblockchain	-address 	Address		create a blockchain

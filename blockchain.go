@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -30,7 +33,12 @@ func (bc *BlockChain) MineBlock(transaction []*Transaction) {
 	if err != nil {
 		log.Panic(err)
 	}
-
+	for _, tx := range transaction {
+		if bc.VerifyTransaction(tx) {
+			fmt.Printf("%x transaction didn't pass the verification\n", tx.ID)
+			log.Panic("ERROR: Invalid transaction")
+		}
+	}
 	newBlock := NewBlock(transaction, lastHash) // create new block
 	// add the new block to the database
 	err = bc.db.Update(func(tx *bolt.Tx) error {
@@ -196,4 +204,50 @@ func (bc *BlockChain) FindUTXO(pubKeyHash []byte) []TXOutput { // 可以合并
 	}
 
 	return UTXOs
+}
+
+// 根据transaction ID 搜索得到Transaction
+func (bc *BlockChain) FindTransaction(ID []byte) (Transaction, error) {
+	bci := bc.Iterator()
+	for {
+		block := bci.Iter()
+
+		for _, tx := range block.Transactions {
+			if bytes.Equal(tx.ID, ID) {
+				return *tx, nil
+			}
+		}
+		if len(block.PrevBlockHash) == 0 {
+			break
+		}
+	}
+	return Transaction{}, errors.New("Transaction is not found")
+}
+
+// 对Transaction签名
+func (bc *BlockChain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) {
+	prevTXs := make(map[string]Transaction)
+
+	for _, vin := range tx.Vin {
+		prevTX, err := bc.FindTransaction(vin.Txid)     // 根据 vin的 transaction 找到来源的transaction
+		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX // id和transaction 对应
+		if err != nil {
+			log.Panic(err)
+		}
+	}
+
+	tx.Sign(privKey, prevTXs)
+}
+
+func (bc *BlockChain) VerifyTransaction(tx *Transaction) bool {
+	prevTXs := make(map[string]Transaction)
+
+	for _, vin := range tx.Vin {
+		prevTX, err := bc.FindTransaction(vin.Txid)
+		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
+		if err != nil {
+			log.Panic(err)
+		}
+	}
+	return tx.Verify(prevTXs)
 }

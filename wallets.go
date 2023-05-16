@@ -90,3 +90,17 @@ func (ws Wallets) SaveToFile() {
 		log.Panic(err)
 	}
 }
+
+func DeleteWallets() {
+	if _, err := os.Stat(walletFile); os.IsNotExist(err) {
+		fmt.Printf("wallet file doesn't exist\n")
+		return
+	}
+	err := os.Remove(walletFile)
+	if err != nil {
+		fmt.Printf("Failed to delete wallet file: %v\n", err)
+		return
+	}
+
+	fmt.Println("wallet deleted successfully.")
+}

@@ -166,6 +166,9 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 // 使用发送方的公钥来解锁签名， 然后跟transaction的数据做对比, 同时检查引用的输出是否属于发送方
 // 问题是 为什么需要prevTXs
 func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
+	if tx.IsCoinbase() {
+		return true
+	}
 	txCopy := tx.TrimmedCopy()
 	curve := elliptic.P256()
 
@@ -189,8 +192,8 @@ func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 		keyLen := len(vin.PubKey)
 		x.SetBytes(vin.PubKey[:(keyLen / 2)])
 		y.SetBytes(vin.PubKey[(keyLen / 2):])
-		rawPubKey := ecdsa.PublicKey{curve, &x, &y}               // 将pubKey的value与curve合并， 然后得到rawPubKey
-		if ecdsa.Verify(&rawPubKey, txCopy.ID, &r, &s) == false { // 验证这个public key 能不能解锁txCopy.ID
+		rawPubKey := ecdsa.PublicKey{curve, &x, &y}       // 将pubKey的value与curve合并， 然后得到rawPubKey
+		if !ecdsa.Verify(&rawPubKey, txCopy.ID, &r, &s) { // 验证这个public key 能不能解锁txCopy.ID
 			return false
 		}
 	}

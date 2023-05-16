@@ -13,7 +13,7 @@ type CLI struct {
 }
 
 func (cli *CLI) printUsage() {
-	fmt.Println(usage)
+	// fmt.Printf(usage)
 }
 
 func (cli *CLI) validateArgs() {

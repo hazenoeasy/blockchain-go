@@ -4,8 +4,7 @@ import "math"
 
 const dbFile = "blockchain.db"
 const blocksBucket = "blocks"
-const usage = `
-Usage:
+const usage = `Usage:
 	createblockchain	-address 	Address		create a blockchain
 	getbalance 			-address 	Address		get balance
 	printchain                   				print all the blocks of the blockchain
@@ -13,6 +12,6 @@ Usage:
 `
 
 // difficulty
-const targetBits = 24
+const targetBits = 1
 const maxNonce = math.MaxInt32
 const subsidy = 10

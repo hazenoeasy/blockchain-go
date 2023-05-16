@@ -34,7 +34,7 @@ func (bc *BlockChain) MineBlock(transaction []*Transaction) {
 		log.Panic(err)
 	}
 	for _, tx := range transaction {
-		if bc.VerifyTransaction(tx) {
+		if !bc.VerifyTransaction(tx) {
 			fmt.Printf("%x transaction didn't pass the verification\n", tx.ID)
 			log.Panic("ERROR: Invalid transaction")
 		}
@@ -54,6 +54,19 @@ func (bc *BlockChain) MineBlock(transaction []*Transaction) {
 	fmt.Printf("Mine the block  %x\n", newBlock.Hash)
 }
 
+func DeleteDB() {
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		fmt.Printf("dbFile doesn't exist\n")
+		return
+	}
+	err := os.Remove(dbFile)
+	if err != nil {
+		fmt.Printf("Failed to delete dbFile: %v\n", err)
+		return
+	}
+
+	fmt.Println("File deleted successfully.")
+}
 func CreateBlockChain(address string) *BlockChain {
 	if dbExists() {
 		fmt.Println("Blockchain already exists.")
@@ -72,7 +85,6 @@ func CreateBlockChain(address string) *BlockChain {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s", genesis.Serialize())
 		err = b.Put(genesis.Hash, genesis.Serialize())
 		if err != nil {
 			return err
